@@ -10,3 +10,4 @@ python-dotenv
 pydantic
 resend
 newsapi-python
+openai
