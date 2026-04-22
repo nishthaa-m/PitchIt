@@ -53,7 +53,7 @@ async def scrape_news():
                 continue
                 
             response = await client.aio.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-1.5-flash",
                 contents=prompt,
                 config={"temperature": 0, "response_mime_type": "application/json"}
             )

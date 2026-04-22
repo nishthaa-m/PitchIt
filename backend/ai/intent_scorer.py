@@ -39,7 +39,7 @@ async def score_prospect(company_name: str, signals: list[dict]) -> dict:
         # Use sonnet 4 (claude-3-5-sonnet-20240620 or requested sonnet version)
         if not client: raise Exception("No API key")
         response = await client.aio.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-1.5-flash",
             contents=prompt,
             config={"temperature": 0, "response_mime_type": "application/json"}
         )
