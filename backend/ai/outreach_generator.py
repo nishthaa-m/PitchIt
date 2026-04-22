@@ -1,9 +1,7 @@
 import os
 import json
-from google import genai
-
-gemini_key = os.environ.get("GEMINI_API_KEY")
-client = genai.Client(api_key=gemini_key) if gemini_key else None
+import asyncio
+from ai.client import OR_CLIENT, get_model
 
 async def generate_sequence(stakeholder: dict, prospect: dict, signals: list[dict]) -> dict:
     persona_mapping = {
@@ -59,28 +57,44 @@ async def generate_sequence(stakeholder: dict, prospect: dict, signals: list[dic
 
     Return ONLY valid JSON:
     {{
-      "email_1": {{"subject": "...", "body": "..."}},
-      "email_2": {{"subject": "...", "body": "..."}},
-      "email_3": {{"subject": "...", "body": "..."}}
+      "email_1_subject": "...",
+      "email_1_body": "...",
+      "email_2_subject": "...",
+      "email_2_body": "...",
+      "email_3_subject": "...",
+      "email_3_body": "..."
     }}
     """
     
-    try:
-        if not client: raise Exception("No API key")
-        response = await client.aio.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=prompt,
-            config={"temperature": 0, "response_mime_type": "application/json"}
-        )
-        
-        result_text = response.text.strip()
-        if result_text.startswith("```json"):
-            result_text = result_text[7:-3]
-        return json.loads(result_text)
-    except Exception as e:
-        print(f"Error generating sequence for {stakeholder.get('name')}: {e}")
-        return {
-            "email_1": {"subject": "Quick question regarding FD infra", "body": "Could not generate email due to API error. Please try again."},
-            "email_2": {"subject": "Following up", "body": "Could not generate email due to API error. Please try again."},
-            "email_3": {"subject": "Any thoughts?", "body": "Could not generate email due to API error. Please try again."}
-        }
+    max_retries = 5
+    retry_delay = 10
+    
+    for attempt in range(max_retries):
+        try:
+            if not OR_CLIENT: raise Exception("No OpenRouter API key")
+            response = await OR_CLIENT.chat.completions.create(
+                model=get_model(),
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0
+            )
+            
+            result_text = response.choices[0].message.content.strip()
+            if result_text.startswith("```json"):
+                result_text = result_text[7:-3]
+            return json.loads(result_text)
+        except Exception as e:
+            if "429" in str(e) and attempt < max_retries - 1:
+                print(f"Rate limit hit for sequence generation, retrying in {retry_delay}s...")
+                await asyncio.sleep(retry_delay)
+                retry_delay *= 2
+                continue
+                
+            print(f"Error generating sequence for {stakeholder.get('name')}: {e}")
+            return {
+                "email_1_subject": "Quick question regarding FD infra",
+                "email_1_body": "Could not generate email due to API error. Please try again.",
+                "email_2_subject": "Following up",
+                "email_2_body": "Could not generate email due to API error. Please try again.",
+                "email_3_subject": "Any thoughts?",
+                "email_3_body": "Could not generate email due to API error. Please try again."
+            }

@@ -1,9 +1,7 @@
 import os
 import json
-from google import genai
-
-gemini_key = os.environ.get("GEMINI_API_KEY")
-client = genai.Client(api_key=gemini_key) if gemini_key else None
+import asyncio
+from ai.client import OR_CLIENT, get_model
 
 async def check_compliance(email_body: str) -> dict:
     prohibited_list = [
@@ -42,17 +40,17 @@ async def check_compliance(email_body: str) -> dict:
     """
     
     try:
-        if not client: raise Exception("No API key")
-        response = await client.aio.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=prompt,
-            config={"temperature": 0, "response_mime_type": "application/json"}
+        if not OR_CLIENT: raise Exception("No OpenRouter API key")
+        response = await OR_CLIENT.chat.completions.create(
+            model=get_model(),
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0
         )
         
-        result_text = response.text.strip()
+        result_text = response.choices[0].message.content.strip()
         if result_text.startswith("```json"):
             result_text = result_text[7:-3]
         return json.loads(result_text)
     except Exception as e:
-        print(f"Error checking compliance: {e}")
+        print(f"Error in compliance check: {e}")
         return {"is_compliant": True, "flags": [], "compliance_score": 100}

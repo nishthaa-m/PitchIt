@@ -1,12 +1,11 @@
 import os
 import httpx
 import json
-from google import genai
+import asyncio
+from ai.client import OR_CLIENT, get_model
 from datetime import datetime, timedelta
 
 NEWS_API_KEY = os.environ.get("NEWS_API_KEY")
-gemini_key = os.environ.get("GEMINI_API_KEY")
-client = genai.Client(api_key=gemini_key) if gemini_key else None
 
 async def scrape_news():
     if not NEWS_API_KEY:
@@ -48,17 +47,16 @@ async def scrape_news():
         If this doesn't look like a funding announcement for a specific company, return {{}}.
         """
         try:
-            if not client:
-                print("No GEMINI_API_KEY provided.")
-                continue
-                
-            response = await client.aio.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=prompt,
-                config={"temperature": 0, "response_mime_type": "application/json"}
+            if not OR_CLIENT: raise Exception("No OpenRouter API key")
+            response = await OR_CLIENT.chat.completions.create(
+                model=get_model(),
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0
             )
-            # Parse JSON
-            result_text = response.text.strip()
+            
+            result_text = response.choices[0].message.content.strip()
+            if result_text.startswith("```json"):
+                result_text = result_text[7:-3]
             parsed = json.loads(result_text)
             
             if parsed and parsed.get("company_name"):

@@ -88,6 +88,17 @@ export default function ProspectDetail() {
                 }
               ]
             };
+          } else if (id === "3" || id === "4") {
+            mockProspect = {
+              id,
+              company_name: id === "3" ? "Crescendo Global" : "Employee Forums",
+              intent_score: 45,
+              urgency: "low",
+              fit_summary: "No immediate buying signals detected.",
+              reasoning: "Steady state operations. No recent funding or leadership hires in the deposit space.",
+              signals: [],
+              stakeholders: []
+            };
           } else {
             mockProspect = {
               id,

@@ -1,11 +1,9 @@
 import feedparser
-from google import genai
 import os
 import json
+import asyncio
 from datetime import datetime
-
-gemini_key = os.environ.get("GEMINI_API_KEY")
-client = genai.Client(api_key=gemini_key) if gemini_key else None
+from ai.client import OR_CLIENT, get_model
 
 async def scrape_rbi():
     feed_url = "https://rbi.org.in/rss/rss.aspx"
@@ -28,24 +26,25 @@ async def scrape_rbi():
         Return ONLY valid JSON (no markdown):
         {{
             "is_relevant": <true|false>,
+            "relevance_score": <0-100>,
             "company_name": "<specific entity mentioned, or 'Industry Wide' if general>",
             "summary": "<1 sentence summary of what this means>"
         }}
         """
         try:
-            if not client:
-                continue
-                
-            response = await client.aio.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=prompt,
-                config={"temperature": 0, "response_mime_type": "application/json"}
+            if not OR_CLIENT: raise Exception("No OpenRouter API key")
+            response = await OR_CLIENT.chat.completions.create(
+                model=get_model(),
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0
             )
             
-            result_text = response.text.strip()
+            result_text = response.choices[0].message.content.strip()
+            if result_text.startswith("```json"):
+                result_text = result_text[7:-3]
             parsed = json.loads(result_text)
             
-            if parsed.get("is_relevant"):
+            if parsed and parsed.get("relevance_score", 0) > 60:
                 # Extract date from RSS format (e.g., Wed, 05 Jun 2024 16:21:00 GMT)
                 try:
                     dt = datetime.strptime(entry.published, "%a, %d %b %Y %H:%M:%S %Z")

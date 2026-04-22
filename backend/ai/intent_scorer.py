@@ -1,9 +1,7 @@
 import os
 import json
-from google import genai
-
-gemini_key = os.environ.get("GEMINI_API_KEY")
-client = genai.Client(api_key=gemini_key) if gemini_key else None
+import asyncio
+from ai.client import OR_CLIENT, get_model
 
 async def score_prospect(company_name: str, signals: list[dict]) -> dict:
     prompt = f"""
@@ -27,34 +25,45 @@ async def score_prospect(company_name: str, signals: list[dict]) -> dict:
       "intent_score": <integer 0-100>,
       "urgency": "<high|medium|low>",
       "reasoning": "<2-3 specific sentences citing exact signals, funding amounts, dates>",
-      "recommended_persona": "<CTO|CFO|CPO|CEO|Compliance>",
+      "recommended_persona": "<STRICTLY one of: CTO, CFO, CPO, CEO, Compliance>",
       "fit_summary": "<one line: why Blostem's FD API is relevant to this company right now>"
     }}
+    
+    IMPORTANT: The "recommended_persona" field MUST be EXACTLY one of: CTO, CFO, CPO, CEO, Compliance. Do NOT add descriptions or slashes.
 
     Scoring guide: 80-100 = immediate opportunity (act within 2 weeks), 
     60-79 = strong interest (nurture now), 40-59 = warm (monitor), below 40 = cold.
     """
     
-    try:
-        # Use sonnet 4 (claude-3-5-sonnet-20240620 or requested sonnet version)
-        if not client: raise Exception("No API key")
-        response = await client.aio.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=prompt,
-            config={"temperature": 0, "response_mime_type": "application/json"}
-        )
-        
-        result_text = response.text.strip()
-        if result_text.startswith("```json"):
-            result_text = result_text[7:-3]
-        return json.loads(result_text)
-    except Exception as e:
-        print(f"Error scoring prospect {company_name}: {e}")
-        # Fallback values
-        return {
-            "intent_score": 50,
-            "urgency": "medium",
-            "reasoning": "Could not analyze signals due to API error. Default medium score applied.",
-            "recommended_persona": "CTO",
-            "fit_summary": "Potential fit based on basic fintech profile."
-        }
+    max_retries = 5
+    retry_delay = 10 # initial delay in seconds
+    
+    for attempt in range(max_retries):
+        try:
+            if not OR_CLIENT: raise Exception("No OpenRouter API key")
+            response = await OR_CLIENT.chat.completions.create(
+                model=get_model(),
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0
+            )
+            
+            result_text = response.choices[0].message.content.strip()
+            if result_text.startswith("```json"):
+                result_text = result_text[7:-3]
+            return json.loads(result_text)
+        except Exception as e:
+            if "429" in str(e) and attempt < max_retries - 1:
+                print(f"Rate limit hit for {company_name}, retrying in {retry_delay}s...")
+                await asyncio.sleep(retry_delay)
+                retry_delay *= 2 # exponential backoff
+                continue
+            
+            print(f"Error scoring prospect {company_name}: {e}")
+            # Fallback values
+            return {
+                "intent_score": 50,
+                "urgency": "medium",
+                "reasoning": "Could not analyze signals due to API error. Default medium score applied.",
+                "recommended_persona": "CTO",
+                "fit_summary": "Potential fit based on basic fintech profile."
+            }

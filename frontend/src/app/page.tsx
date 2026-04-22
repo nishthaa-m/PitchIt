@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Activity, Users, Target, Mail, ScanSearch, CheckCircle2 } from "lucide-react";
 import PipelineTable from "@/components/PipelineTable";
+import TutorialModal from "@/components/TutorialModal";
 import { Button } from "@/components/ui/button";
 import { runPipeline } from "@/lib/api";
 
@@ -111,6 +112,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
+      <TutorialModal />
       {/* Header Area */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
