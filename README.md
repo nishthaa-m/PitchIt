@@ -1,4 +1,4 @@
-# PitchIt AI 🚀
+# PitchIt AI
 **Autonomous Multi-Agent B2B Prospecting for Banking Infrastructure**
 
 PitchIt is an AI-powered sales intelligence platform that helps banking infrastructure providers (like Blostem) identify, score, and reach out to high-potential fintech partners autonomously.
@@ -44,4 +44,4 @@ npm run dev
 ```
 
 ---
-Built with ❤️ for the **Blostem Hackathon**.
+Built for the **Blostem Hackathon**.
