@@ -5,6 +5,8 @@ node_modules/
 
 # Testing
 coverage/
+backend/test_*.py
+backend/list_or_models.py
 
 # Next.js
 .next/
