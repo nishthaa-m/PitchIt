@@ -37,7 +37,7 @@ async def scrape_rbi():
                 continue
                 
             response = await client.aio.models.generate_content(
-                model="gemini-1.5-flash",
+                model="gemini-2.0-flash",
                 contents=prompt,
                 config={"temperature": 0, "response_mime_type": "application/json"}
             )

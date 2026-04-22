@@ -68,7 +68,7 @@ async def generate_sequence(stakeholder: dict, prospect: dict, signals: list[dic
     try:
         if not client: raise Exception("No API key")
         response = await client.aio.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-2.0-flash",
             contents=prompt,
             config={"temperature": 0, "response_mime_type": "application/json"}
         )

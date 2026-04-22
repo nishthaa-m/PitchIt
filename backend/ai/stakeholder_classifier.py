@@ -33,7 +33,7 @@ async def classify_stakeholders(company_name: str, people: list[dict]) -> list[d
         try:
             if not client: raise Exception("No API key")
             response = await client.aio.models.generate_content(
-                model="gemini-1.5-flash",
+                model="gemini-2.0-flash",
                 contents=prompt,
                 config={"temperature": 0, "response_mime_type": "application/json"}
             )
