@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+supabase>=2.3.4
+google-genai>=0.3.0
+playwright
+feedparser
+apscheduler>=3.10.4
+httpx
+python-dotenv
+pydantic
+resend
+newsapi-python
