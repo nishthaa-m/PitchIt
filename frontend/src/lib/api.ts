@@ -1,4 +1,9 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Ensure it's an absolute URL if it's meant to be an external domain
+if (rawApiUrl !== 'http://localhost:8000' && !rawApiUrl.startsWith('http')) {
+  rawApiUrl = `https://${rawApiUrl}`;
+}
+export const API_URL = rawApiUrl;
 
 export async function fetchProspects() {
   const res = await fetch(`${API_URL}/prospects`);
