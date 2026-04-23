@@ -37,20 +37,25 @@ export default function ProspectDetail() {
       setLoading(true);
       setProspect(null);
       setSelectedStakeholder(null);
+
+      // Check URL param first, then localStorage
+      const urlParams = new URLSearchParams(window.location.search);
+      const isDemoUrl = urlParams.get('demo') === 'true';
+      const saved = localStorage.getItem("pitchit_demo_mode");
+      const currentDemoMode = isDemoUrl || (saved === "true");
+
       try {
-        if (demoMode) {
+        if (currentDemoMode && (id === "1" || id === "2" || id === "3" || id === "4")) {
           // Mock data
-          const isFlagged = id === "1"; // Jupiter Money mock id
-          
-          let mockProspect;
-          if (isFlagged) {
+          let mockProspect = null;
+          if (id === "1") {
             mockProspect = {
               id,
               company_name: "Jupiter Money",
               intent_score: 87,
               urgency: "high",
               fit_summary: "Strong deposit pipeline candidate.",
-              reasoning: "Raised ₹280Cr Series C on March 12. Posted Head of Deposits role 3 weeks later. Strong signal of deposits product launch.",
+              reasoning: "Raised ₹280Cr Series C on March 12. Posted Head of Deposits role 3 weeks later.",
               signals: [
                 { id: "s1", signal_type: "funding", signal_date: "2024-03-12", signal_detail: "Raised ₹280Cr Series C", source_url: "#" },
                 { id: "s2", signal_type: "job_post", signal_date: "2024-04-02", signal_detail: "Posted Head of Deposits role", source_url: "#" },
@@ -71,35 +76,15 @@ export default function ProspectDetail() {
                       email_1_subject: "Quick question about Jupiter's deposits infra",
                       email_1_body: `Hi Rahul,\n\nSaw that Jupiter just raised Series C. Congrats! With the new focus on deposits, you should check out Blostem's FD APIs. We offer guaranteed returns of 8% for your users.\n\nLet's chat.`,
                       email_2_subject: "FD API Integration timeline", 
-                      email_2_body: `Hi Rahul,\n\nFollowing up on my previous note. Since Jupiter is actively expanding its deposit offerings, I wanted to share that our API infrastructure can go live in under 2 weeks with minimal engineering overhead.\n\nWould you be open to a brief technical demo next week?`,
+                      email_2_body: `Hi Rahul,\n\nFollowing up on my previous note. Would you be open to a brief technical demo?`,
                       email_3_subject: "Any thoughts on deposit infrastructure?", 
-                      email_3_body: `Hi Rahul,\n\nI know you're busy, so I'll keep this short. If deposit infrastructure is on your roadmap for this quarter, just reply 'yes' and I'll send over our technical documentation and API reference for your team to review.`
+                      email_3_body: `Hi Rahul,\n\nIf deposit infrastructure is on your roadmap, just reply 'yes'.`
                     }
                   ]
-                },
-                {
-                  id: "st2",
-                  name: "Priya Patel",
-                  title: "Head of Products",
-                  buyer_role: "Champion",
-                  outreach_priority: 8,
-                  linkedin_url: "https://linkedin.com",
-                  sequences: []
                 }
               ]
             };
-          } else if (id === "3" || id === "4") {
-            mockProspect = {
-              id,
-              company_name: id === "3" ? "Crescendo Global" : "Employee Forums",
-              intent_score: 45,
-              urgency: "low",
-              fit_summary: "No immediate buying signals detected.",
-              reasoning: "Steady state operations. No recent funding or leadership hires in the deposit space.",
-              signals: [],
-              stakeholders: []
-            };
-          } else {
+          } else if (id === "2") {
             mockProspect = {
               id,
               company_name: "Fi Money",
@@ -124,33 +109,44 @@ export default function ProspectDetail() {
                       compliance_status: "pending",
                       compliance_flags: [],
                       email_1_subject: "Fi Money's wealth management expansion",
-                      email_1_body: `Hi Sujith,\n\nCongratulations on the recent regulatory progress for Fi's new product lines. As you scale your wealth management offerings, integrating compliant Fixed Deposit infrastructure can be challenging and time-consuming.\n\nBlostem provides ready-to-use, RBI-compliant FD APIs that can accelerate your time-to-market. Would you be open to a brief chat next week to discuss this?`,
+                      email_1_body: `Hi Sujith,\n\nCongratulations on the recent regulatory progress. Blostem provides ready-to-use, RBI-compliant FD APIs. Would you be open to a brief chat?`,
                       email_2_subject: "FD APIs for Fi Money", 
-                      email_2_body: `Hi Sujith,\n\nFollowing up on my previous note. We recently helped a similar platform launch their deposit products in under two weeks.\n\nLet me know if you'd like to see a quick technical demo of our API infrastructure.`,
-                      email_3_subject: "Any thoughts on deposit infrastructure?", 
-                      email_3_body: `Hi Sujith,\n\nI know you're busy, so I'll keep this short. If deposit infrastructure is on your roadmap for this quarter, just reply 'yes' and I'll send over some technical documentation for your team to review.`
+                      email_2_body: `Hi Sujith,\n\nLet me know if you'd like to see a quick technical demo of our API infrastructure.`,
+                      email_3_subject: "Any thoughts?", 
+                      email_3_body: `Hi Sujith,\n\nI know you're busy. If deposit infrastructure is on your roadmap, let's connect.`
                     }
                   ]
                 }
               ]
             };
+          } else {
+            mockProspect = {
+              id,
+              company_name: id === "3" ? "Crescendo Global" : "Employee Forums",
+              intent_score: 45,
+              urgency: "low",
+              fit_summary: "No immediate buying signals detected.",
+              reasoning: "Steady state operations. No recent signals in the deposit space.",
+              signals: [],
+              stakeholders: []
+            };
           }
           setProspect(mockProspect);
-          if (mockProspect.stakeholders?.length > 0) {
+          if (mockProspect && mockProspect.stakeholders?.length > 0) {
             setSelectedStakeholder(mockProspect.stakeholders[0]);
-          } else {
-            setSelectedStakeholder(null);
           }
         } else {
+          // LIVE MODE: Fetch from API
           const data = await fetchProspect(id);
           setProspect(data);
-          if (data.stakeholders?.length > 0) {
+          if (data && data.stakeholders?.length > 0) {
             setSelectedStakeholder(data.stakeholders[0]);
-          } else {
-            setSelectedStakeholder(null);
           }
         }
-      } catch(e) { console.error(e) }
+      } catch(e) { 
+        console.error("Error loading prospect:", e);
+        setProspect(null);
+      }
       setLoading(false);
     }
     if (mounted) {
