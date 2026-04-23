@@ -1,11 +1,10 @@
-# PitchIt AI
+# PitchIt
 **Autonomous Multi-Agent B2B Prospecting for Banking Infrastructure**
 
 PitchIt is an AI-powered sales intelligence platform that helps banking infrastructure providers (like Blostem) identify, score, and reach out to high-potential fintech partners autonomously.
 
-## 🔗 Links
-- **Live Demo:** [pitchit-ai.vercel.app](https://pitchit-ai.vercel.app)
-- **Backend API:** [pitchit-api.railway.app](https://pitchit-api.railway.app) (Example)
+## 🔗 Link
+- **Live Demo:** [pitchit-ai.vercel.app](https://pitch-it-nine.vercel.app/)
 
 ## 💡 The Problem
 In B2B sales for banking APIs (Fixed Deposits, Payments, Compliance), timing is everything. Sales teams spend hours manually scanning news for funding rounds or job boards for "Head of Product" hires. By the time they reach out, competitors have already moved in.
